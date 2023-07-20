@@ -9,8 +9,14 @@ const (
 	MultiAZCount  = 3
 )
 
+// MinReplicasValidator is responsible for verifying whether the minReplicas value adheres to specific rules:
+//
+// * The minReplicas value must be a positive number.
+// * If multiple availability zones are used, the Cluster must have a minimum of 3 compute nodes and the total count of nodes must be a multiple of 3.
+// * If a single availability zone is used, the Cluster must include at least 2 compute nodes.
+// * For Hosted clusters, the number of compute nodes must be a multiple of the number of private subnets.
 func MinReplicasValidator(minReplicas int, multiAZ bool, isHostedCP bool, privateSubnetsCount int) error {
-	if minReplicas < 0 {
+	if minReplicas <= 0 {
 		return fmt.Errorf("min-replica must be greater than zero")
 	}
 	if isHostedCP {
@@ -39,6 +45,13 @@ func MinReplicasValidator(minReplicas int, multiAZ bool, isHostedCP bool, privat
 	return nil
 }
 
+// MaxReplicasValidator is responsible for verifying whether the maxReplicas value adheres to specific rules:
+//
+// * The maxReplicas value must be at least equal to minReplicas.
+// * If multiple availability zones are used, the number of compute nodes must be a multiple of 3.
+// * For Hosted clusters, the number of compute nodes must be a multiple of the number of private subnets.
+//
+// The assumtion here is that minReplicas was already validated
 func MaxReplicasValidator(minReplicas int, maxReplicas int, multiAZ bool, isHostedCP bool, privateSubnetsCount int) error {
 	if minReplicas > maxReplicas {
 		return fmt.Errorf("max-replicas must be greater or equal to min-replicas")
@@ -58,6 +71,10 @@ func MaxReplicasValidator(minReplicas int, maxReplicas int, multiAZ bool, isHost
 	return nil
 }
 
+// ValidateAvailabilityZonesCount is responsible for verifying whether the number of availability zones adheres to specific rules:
+//
+// * The number of availability zones for a multi AZ cluster should be 3.
+// * The number of availability zones for a single AZ cluster should be 1.
 func ValidateAvailabilityZonesCount(multiAZ bool, availabilityZonesCount int) error {
 	if multiAZ && availabilityZonesCount != MultiAZCount {
 		return fmt.Errorf("The number of availability zones for a multi AZ cluster should be %d, "+
